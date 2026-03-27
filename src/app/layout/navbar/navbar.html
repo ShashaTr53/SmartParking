@@ -1,0 +1,28 @@
+<header class="navbar">
+  <div class="navbar-left">
+    <button class="toggle-btn" (click)="onToggleSidebar()" title="Toggle sidebar">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="breadcrumb">
+      <span class="breadcrumb-root">SmartParking</span>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">{{ currentPage }}</span>
+    </div>
+  </div>
+
+  <div class="navbar-right">
+    <!-- Notification Bell -->
+    <button class="icon-btn" title="Notifications">
+      <span class="bell-icon">🔔</span>
+      <span class="notif-badge">3</span>
+    </button>
+
+    <!-- Logout -->
+    <button class="logout-btn" (click)="logout()">
+      <span>Logout</span>
+      <span>⎋</span>
+    </button>
+  </div>
+</header>

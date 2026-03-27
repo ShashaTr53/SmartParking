@@ -20,14 +20,11 @@
       </small>
     </div>
 
-    <div>
-      <label>Role</label>
       <select formControlName="role">
-        <option value="Admin">Admin</option>
-        <option value="Manager">Manager</option>
-        <option value="Driver">Driver</option>
+        <option [value]="0">Admin</option>
+        <option [value]="1">Manager</option>
+        <option [value]="2">Driver</option>
       </select>
-    </div>
 
     <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
     <p *ngIf="successMessage" class="success">{{ successMessage }}</p>

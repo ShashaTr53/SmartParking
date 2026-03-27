@@ -21,11 +21,11 @@ export class RegisterComponent {
     private authService: AuthService,
     private router: Router
   ) {
-   this.registerForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    role: ['Driver', Validators.required]
-  });
+    this.registerForm = this.fb.group({
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', [Validators.required, Validators.minLength(6)]],
+        role: [2, Validators.required]  // 2 = Driver by default
+      });
   }
 
   onSubmit() {
@@ -33,11 +33,13 @@ export class RegisterComponent {
       this.authService.register(this.registerForm.value).subscribe({
         next: (res: any) => {
           this.successMessage = 'Account created successfully!';
-          setTimeout(() => this.router.navigate(['/login']), 1500);
+          this.errorMessage = '';
+          this.router.navigate(['/login']);
         },
         error: (err: any) => {
-          console.log('Error details:', err.error); // ✅ add this
+          console.log('Error details:', err.error);
           this.errorMessage = err.error?.message || 'Registration failed. Try again.';
+          this.successMessage = '';
         }
       });
     }

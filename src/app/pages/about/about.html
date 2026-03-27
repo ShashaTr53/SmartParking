@@ -1,0 +1,111 @@
+<!-- NAVBAR -->
+<nav class="landing-nav">
+  <div class="nav-logo">
+    <span class="logo-mark">🅿</span>
+    <span class="logo-name">SmartParking</span>
+  </div>
+  <div class="nav-links">
+    <a routerLink="/home" class="nav-link">Home</a>
+    <a routerLink="/about" class="nav-link active">About</a>
+  </div>
+  <div class="nav-actions">
+    <a routerLink="/login" class="btn-ghost">Login</a>
+    <a routerLink="/register" class="btn-solid">Get Started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="about-hero">
+  <div class="hero-glow"></div>
+  <div class="about-hero-content">
+    <span class="section-tag">Our Story</span>
+    <h1>We're building the future<br><span class="accent-text">of urban parking.</span></h1>
+    <p>SmartParking was born out of frustration with wasted time, full lots, and zero visibility into parking availability. We set out to fix that — for drivers, managers, and cities.</p>
+  </div>
+</section>
+
+<!-- MISSION -->
+<section class="mission-section">
+  <div class="mission-grid">
+    <div class="mission-text">
+      <span class="section-tag">Our Mission</span>
+      <h2>Make every parking<br>experience effortless.</h2>
+      <p>We believe that parking should be the easiest part of your journey — not the most stressful. Our platform gives real-time visibility into availability, automates management, and helps cities optimize their infrastructure.</p>
+      <a routerLink="/register" class="btn-solid" style="margin-top: 1.5rem; display: inline-flex;">Join Us Today</a>
+    </div>
+    <div class="mission-visual">
+      <div class="visual-card">
+        <div class="vc-row"><span class="vc-label">Parking Central</span><span class="vc-badge open">Open</span></div>
+        <div class="vc-bar"><div class="vc-fill" style="width: 65%"></div></div>
+        <div class="vc-meta">65% occupied · 42 spots free</div>
+      </div>
+      <div class="visual-card">
+        <div class="vc-row"><span class="vc-label">Parking Nord</span><span class="vc-badge full">Full</span></div>
+        <div class="vc-bar"><div class="vc-fill full" style="width: 100%"></div></div>
+        <div class="vc-meta">100% occupied · 0 spots free</div>
+      </div>
+      <div class="visual-card">
+        <div class="vc-row"><span class="vc-label">Parking Sud</span><span class="vc-badge partial">Partial</span></div>
+        <div class="vc-bar"><div class="vc-fill partial" style="width: 30%"></div></div>
+        <div class="vc-meta">30% occupied · 84 spots free</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES -->
+<section class="values-section">
+  <div class="section-header">
+    <span class="section-tag">What drives us</span>
+    <h2>Our Values</h2>
+  </div>
+  <div class="values-grid">
+    <div class="value-card" *ngFor="let v of values">
+      <div class="value-icon">{{ v.icon }}</div>
+      <h3>{{ v.title }}</h3>
+      <p>{{ v.desc }}</p>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="team-section">
+  <div class="section-header">
+    <span class="section-tag">The Team</span>
+    <h2>Built by students,<br>for the real world.</h2>
+  </div>
+  <div class="team-grid">
+    <div class="team-card" *ngFor="let member of team">
+      <div class="team-avatar">{{ member.initial }}</div>
+      <div class="team-name">{{ member.name }}</div>
+      <div class="team-role">{{ member.role }}</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-box">
+    <h2>Ready to get started?</h2>
+    <p>Create your account and experience SmartParking today.</p>
+    <div class="cta-actions">
+      <a routerLink="/register" class="btn-solid large">Register Now</a>
+      <a routerLink="/login" class="btn-ghost large">Login →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="landing-footer">
+  <div class="footer-logo">
+    <span class="logo-mark">🅿</span>
+    <span class="logo-name">SmartParking</span>
+  </div>
+  <p class="footer-copy">© 2026 SmartParking. All rights reserved.</p>
+  <div class="footer-links">
+    <a routerLink="/home">Home</a>
+    <a routerLink="/about">About</a>
+    <a routerLink="/login">Login</a>
+    <a routerLink="/register">Register</a>
+  </div>
+</footer>
