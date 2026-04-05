@@ -5,11 +5,30 @@ using Microsoft.OpenApi.Models;
 using SmartParking.Models;
 using SmartParking.Filters;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers + Views
-builder.Services.AddControllersWithViews();
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader());
+});
+
+// Controllers + JSON
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        // Pour afficher les enums comme texte
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+
+        // Pour éviter les boucles de références JSON
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 
 // Database
@@ -51,7 +70,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Swagger Configuration
+// Swagger
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -86,19 +105,16 @@ builder.Services.AddSwaggerGen(options =>
     });
 
     options.OperationFilter<AuthorizeCheckOperationFilter>();
+    options.UseInlineDefinitionsForEnums();
 });
 
-// Force the app to listen on the same URLs as your launchSettings (ensures https://localhost:7179)
+// URLs
 builder.WebHost.UseUrls("https://localhost:7179", "http://localhost:5232");
 
 var app = builder.Build();
 
-// Auto migration
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    context.Database.Migrate();
-}
+// CORS
+app.UseCors("AllowAll");
 
 // Swagger
 app.UseSwagger();
@@ -107,9 +123,9 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "SmartParking API V1");
 });
 
+// Error handling
 if (app.Environment.IsDevelopment())
 {
-    // Helpful during development
     app.UseDeveloperExceptionPage();
 }
 else
@@ -120,17 +136,18 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Route par défaut MVC
+// Route MVC par défaut
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Routes API avec attributs
+// Routes API
 app.MapControllers();
 
 app.Run();
