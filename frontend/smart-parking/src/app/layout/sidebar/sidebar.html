@@ -1,0 +1,44 @@
+<aside class="sidebar" [class.collapsed]="collapsed">
+
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <span class="logo-icon">🅿</span>
+    <span class="logo-text" *ngIf="!collapsed">SmartParking</span>
+  </div>
+
+  <!-- User Info -->
+  <div class="sidebar-user" *ngIf="!collapsed">
+    <div class="user-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
+    <div class="user-info">
+      <span class="user-name">{{ userName }}</span>
+      <span class="user-role">{{ userRole }}</span>
+    </div>
+  </div>
+  <div class="sidebar-user-mini" *ngIf="collapsed">
+    <div class="user-avatar-mini">{{ userName.charAt(0).toUpperCase() }}</div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <a
+      *ngFor="let item of visibleItems"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      class="nav-item"
+      [title]="collapsed ? item.label : ''"
+    >
+      <span class="nav-icon">{{ item.icon }}</span>
+      <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+      <span class="active-indicator" *ngIf="!collapsed"></span>
+    </a>
+  </nav>
+
+  <!-- Bottom: Logout -->
+  <div class="sidebar-footer">
+    <a class="nav-item logout" [title]="collapsed ? 'Logout' : ''">
+      <span class="nav-icon">⎋</span>
+      <span class="nav-label" *ngIf="!collapsed">Logout</span>
+    </a>
+  </div>
+
+</aside>

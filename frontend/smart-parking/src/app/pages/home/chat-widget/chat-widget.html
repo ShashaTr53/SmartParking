@@ -1,0 +1,43 @@
+<!-- Floating button -->
+<button class="chat-fab" (click)="toggleChat()">
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" viewBox="0 0 24 24">
+    <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/>
+  </svg>
+</button>
+
+<!-- Chat popup -->
+@if (isOpen) {
+  <div class="chat-popup">
+    <div class="chat-header">
+      <span>SmartParking Assistant</span>
+      <button class="close-btn" (click)="toggleChat()">✕</button>
+    </div>
+
+    <div class="chat-body" #chatBox>
+      @if (messages.length === 0) {
+        <p class="empty-msg">Hi! How can I help you today? 👋</p>
+      }
+      @for (msg of messages; track $index) {
+        <div [class]="'msg ' + msg.role">
+          <span>{{ msg.content }}</span>
+        </div>
+      }
+      @if (loading) {
+        <div class="msg assistant">
+          <span class="typing">...</span>
+        </div>
+      }
+    </div>
+
+    <div class="chat-footer">
+      <input
+        [(ngModel)]="userInput"
+        type="text"
+        placeholder="Type a message..."
+        (keydown.enter)="sendMessage()"
+        [disabled]="loading"
+      />
+      <button (click)="sendMessage()" [disabled]="loading">Send</button>
+    </div>
+  </div>
+}

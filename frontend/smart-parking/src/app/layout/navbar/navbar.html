@@ -1,0 +1,22 @@
+<nav class="navbar" *ngIf="!isDashboard">
+  <a class="nav-logo" routerLink="/">SmartParking</a>
+
+  <div class="nav-links">
+    <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a>
+    <a class="nav-link" routerLink="/about" routerLinkActive="active">About</a>
+  </div>
+
+  <div class="nav-actions">
+    <!-- Not logged in -->
+    <ng-container *ngIf="!isLoggedIn">
+      <a class="btn-ghost" routerLink="/login">Login</a>
+      <a class="btn-accent" routerLink="/register">Register</a>
+    </ng-container>
+
+    <!-- Logged in -->
+    <ng-container *ngIf="isLoggedIn">
+      <button class="btn-ghost" (click)="goToDashboard()">Dashboard</button>
+      <button class="btn-logout" (click)="logout()">Logout</button>
+    </ng-container>
+  </div>
+</nav>

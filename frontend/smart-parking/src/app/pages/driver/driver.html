@@ -1,0 +1,324 @@
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-title">SmartParking</span>
+      <small class="logo-sub">Driver panel</small>
+    </div>
+    <div class="nav-item" [class.active]="section==='overview'" (click)="show('overview')">Overview</div>
+    <div class="nav-item" [class.active]="section==='parkings'" (click)="show('parkings')">Parkings</div>
+    <div class="nav-item" [class.active]="section==='spots'" (click)="show('spots')">Spots</div>
+    <div class="nav-item" [class.active]="section==='reservations'" (click)="show('reservations')">My Reservations</div>
+    <div class="nav-item" [class.active]="section==='profile'" (click)="show('profile')">My Profile</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <h2>{{ pageTitle }}</h2>
+      <div class="topbar-right">
+        <span class="badge">Driver</span>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <div *ngIf="section==='overview'">
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-label">Parkings</div>
+            <div class="stat-val">{{ counts.p }}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Available Spots</div>
+            <div class="stat-val">{{ counts.available }}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Occupied Spots</div>
+            <div class="stat-val">{{ counts.occupied }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARKINGS -->
+      <div *ngIf="section==='parkings'">
+        <div class="section-header"><h3 class="section-title">All Parkings</h3></div>
+
+        <!-- TEMP DEBUG — remove after fixing -->
+
+        <div *ngIf="loadingParkings" class="loading-state">Loading parkings...</div>
+
+        <div *ngIf="!loadingParkings && parkings.length === 0" class="empty-state">
+          No parkings found or request failed.
+        </div>
+
+        <table *ngIf="!loadingParkings && parkings.length > 0">
+          <thead>
+            <tr>
+              <td class="th">Name</td>
+              <td class="th">Address</td>
+              <td class="th">Status</td>
+              <td class="th">Zones</td>
+              <td class="th">Action</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of parkings">
+              <td>{{ p.name }}</td>
+              <td class="muted">{{ p.address }}</td>
+              <td><span class="badge" [class.badge-inactive]="!p.isActive">{{ p.isActive ? 'Active' : 'Inactive' }}</span></td>
+              <td>{{ p.zones?.length ?? 0 }}</td>
+              <td><button class="btn-view" (click)="viewZones(p)">View Zones</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- BROWSE SPOTS -->
+      <div *ngIf="section==='spots'">
+        <div class="section-header"><h3 class="section-title">Browse Spots</h3></div>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label class="filter-label">Select Parking</label>
+            <select class="filter-select" [(ngModel)]="selectedParkingId" (change)="onParkingChange()">
+              <option value="">— Choose parking —</option>
+              <option *ngFor="let p of parkings" [value]="p.id">{{ p.name }}</option>
+            </select>
+          </div>
+          <div class="filter-group" *ngIf="zones.length > 0">
+            <label class="filter-label">Select Zone</label>
+            <select class="filter-select" [(ngModel)]="selectedZoneId" (change)="loadSpotsByZone()">
+              <option value="">— Choose zone —</option>
+              <option *ngFor="let z of zones" [value]="z.id">{{ z.name }}</option>
+            </select>
+          </div>
+          <div class="filter-group" *ngIf="selectedZoneId">
+            <label class="filter-label">Filter</label>
+            <select class="filter-select" [(ngModel)]="spotFilter" (change)="applyFilter()">
+              <option value="all">All Spots</option>
+              <option value="available">Available Only</option>
+            </select>
+          </div>
+        </div>
+        <div *ngIf="loadingSpots" class="loading-state">Loading spots...</div>
+        <div class="spots-grid" *ngIf="!loadingSpots && filteredSpots.length > 0">
+          <div class="spot-card"
+              *ngFor="let s of filteredSpots"
+              [class.spot-occupied]="s.status !== 0"
+              [class.spot-clickable]="s.status === 0"
+              (click)="openReserveModal(s)">
+            <div class="spot-code">{{ s.code }}</div>
+            <div class="spot-zone">{{ s.zoneName }}</div>
+            <div class="spot-status-dot" [class.dot-occupied]="s.status !== 0"></div>
+            <div class="spot-status-label">{{ s.status === 0 ? 'Free — Click to reserve' : 'Occupied' }}</div>
+          </div>
+        </div>
+        <div class="empty-state" *ngIf="!loadingSpots && selectedZoneId && filteredSpots.length === 0">No spots found.</div>
+        <div class="empty-state" *ngIf="!selectedZoneId">Select a parking and zone to browse spots.</div>
+      </div>
+
+      <!--Reservation and payement -->
+       <div class="modal-overlay" *ngIf="showReserveModal" (click)="closeReserveModal()">
+          <div class="modal" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+              <h3>Reserve Spot {{ selectedSpot?.code }}</h3>
+              <button class="modal-close" (click)="closeReserveModal()">✕</button>
+            </div>
+
+            <div class="modal-body">
+
+              <!-- Date/Time -->
+              <div class="form-group">
+                <label class="filter-label">Start Time</label>
+                <input type="datetime-local" class="filter-select"
+                      [(ngModel)]="reservationForm.startTime" />
+              </div>
+              <div class="form-group">
+                <label class="filter-label">End Time</label>
+                <input type="datetime-local" class="filter-select"
+                      [(ngModel)]="reservationForm.endTime" />
+              </div>
+
+              <!-- Payment Method -->
+              <div class="form-group">
+                <label class="filter-label">Payment Method</label>
+                <select class="filter-select" [(ngModel)]="reservationForm.paymentMethod"
+                        (change)="onPaymentMethodChange()">
+                  <option value="Cash">💵 Cash on arrival</option>
+                  <option value="Online">💳 Pay online</option>
+                </select>
+              </div>
+
+              <!-- Card Form (online only) -->
+              <div *ngIf="showCardForm" class="card-form">
+                <div class="form-group">
+                  <label class="filter-label">Cardholder Name</label>
+                  <input type="text" class="filter-select" placeholder="John Doe"
+                        [(ngModel)]="cardForm.name" />
+                </div>
+                <div class="form-group">
+                  <label class="filter-label">Card Number</label>
+                  <input type="text" class="filter-select" placeholder="1234 5678 9012 3456"
+                        maxlength="19" [(ngModel)]="cardForm.number" />
+                </div>
+                <div class="card-row">
+                  <div class="form-group">
+                    <label class="filter-label">Expiry</label>
+                    <input type="text" class="filter-select" placeholder="MM/YY"
+                          maxlength="5" [(ngModel)]="cardForm.expiry" />
+                  </div>
+                  <div class="form-group">
+                    <label class="filter-label">CVV</label>
+                    <input type="text" class="filter-select" placeholder="123"
+                          maxlength="3" [(ngModel)]="cardForm.cvv" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Error -->
+              <p *ngIf="reserveError" class="error-msg">{{ reserveError }}</p>
+
+              <!-- Actions -->
+              <div class="modal-actions">
+                <button class="btn-cancel-modal" (click)="closeReserveModal()">Cancel</button>
+                <button class="btn-confirm" (click)="confirmReservation()" [disabled]="reserveLoading">
+                  {{ reserveLoading ? 'Processing...' : 'Confirm Reservation' }}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="section==='reservations'">
+          <div class="section-header"><h3 class="section-title">My Reservations</h3></div>
+
+          <div *ngIf="loadingReservations" class="loading-state">Loading...</div>
+
+          <div *ngIf="!loadingReservations && reservations.length === 0" class="empty-state">
+            No reservations yet.
+          </div>
+
+          <table *ngIf="!loadingReservations && reservations.length > 0">
+            <thead>
+              <tr>
+                <td class="th">Spot</td>
+                <td class="th">Parking</td>
+                <td class="th">Start</td>
+                <td class="th">End</td>
+                <td class="th">Payment</td>
+                <td class="th">Status</td>
+                <td class="th">Action</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of reservations">
+                <td>{{ r.spotCode }}</td>
+                <td class="muted">{{ r.parkingName }}</td>
+                <td class="muted">{{ r.startTime | date:'dd/MM/yy HH:mm' }}</td>
+                <td class="muted">{{ r.endTime   | date:'dd/MM/yy HH:mm' }}</td>
+                <td>{{ r.paymentMethod }}</td>
+                <td><span class="badge" [class.badge-inactive]="r.status==='Cancelled'">
+                  {{ statusLabel(r.status) }}
+                </span></td>
+                <td>
+                  <button class="btn-view btn-danger"
+                          *ngIf="r.status !== 'Cancelled'"
+                          (click)="cancelReservation(r.id)">Cancel</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+
+
+
+      <!-- PROFILE -->
+      <div *ngIf="section==='profile'">
+        <div class="profile-wrapper">
+
+          <div class="profile-avatar-card">
+            <div class="avatar-circle">{{ profile.initials }}</div>
+            <div class="avatar-email">{{ profile.email }}</div>
+            <div class="avatar-role-badge">{{ profile.role }}</div>
+            <div class="avatar-id">ID · #{{ profile.id }}</div>
+          </div>
+
+          <div class="profile-info-card">
+            <div class="info-section-title">Account Details</div>
+
+            <div class="info-row">
+              <div class="info-field">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ profile.email }}</div>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="info-field">
+                <div class="info-label">Role</div>
+                <div class="info-value">
+                  <span class="role-pill">{{ profile.role }}</span>
+                </div>
+              </div>
+              <div class="info-field">
+                <div class="info-label">User ID</div>
+                <div class="info-value muted">#{{ profile.id }}</div>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="info-field">
+                <div class="info-label">Session expires</div>
+                <div class="info-value muted">{{ profile.exp }}</div>
+              </div>
+            </div>
+
+            <div class="info-divider"></div>
+            <div class="info-section-title">Security</div>
+
+            <div class="info-row">
+              <div class="info-field">
+                <div class="info-label">Password</div>
+                <div class="info-value muted">••••••••••</div>
+              </div>
+            </div>
+
+            <div class="profile-actions">
+              <button class="btn-logout" (click)="logout()">Logout from account</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ZONE MODAL -->
+      <div class="modal-overlay" *ngIf="showZoneModal" (click)="closeModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Zones — {{ selectedParking?.name }}</h3>
+            <button class="modal-close" (click)="closeModal()">✕</button>
+          </div>
+          <div class="modal-body">
+            <div *ngIf="modalZones.length === 0" class="empty-state">No zones found.</div>
+            <table *ngIf="modalZones.length > 0">
+              <thead><tr><td class="th">Zone Name</td><td class="th">Action</td></tr></thead>
+              <tbody>
+                <tr *ngFor="let z of modalZones">
+                  <td>{{ z.name }}</td>
+                  <td><button class="btn-view" (click)="goToSpots(z)">Browse Spots</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+     
+    </div>
+  </div>
+</div>
