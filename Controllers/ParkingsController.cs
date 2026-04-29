@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartParking.Models;
+using SmartParking.Models.DTOs;
 
 namespace SmartParking.Controllers
 {
@@ -17,66 +18,123 @@ namespace SmartParking.Controllers
             _context = context;
         }
 
-        // Récupérer tous les parkings
         [HttpGet]
-        [Authorize(Roles = "Admin,Manager,Driver")]  // Ajout du rôle Driver
-        public async Task<ActionResult<IEnumerable<Parking>>> GetParkings()
+        [Authorize(Roles = "Admin,Manager,Driver")]
+        public async Task<ActionResult<IEnumerable<ParkingDto>>> GetParkings()
         {
             var parkings = await _context.Parkings
-                .Include(p => p.Zones) // Inclure les zones
+                .Select(p => new ParkingDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Address = p.Address,
+                    Description = p.Description,
+                    IsActive = p.IsActive
+                })
                 .ToListAsync();
 
             return Ok(parkings);
         }
 
-        // Récupérer un parking spécifique par ID
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Manager,Driver")]  // Ajout du rôle Driver
-        public async Task<ActionResult<Parking>> GetParking(int id)
+        [Authorize(Roles = "Admin,Manager,Driver")]
+        public async Task<ActionResult<ParkingDto>> GetParking(int id)
         {
-            var parking = await _context.Parkings
-                .Include(p => p.Zones)
-                .FirstOrDefaultAsync(p => p.Id == id);
+            var parking = await _context.Parkings.FindAsync(id);
 
             if (parking == null)
                 return NotFound(new { message = "Parking not found" });
 
-            return Ok(parking);
+            var result = new ParkingDto
+            {
+                Id = parking.Id,
+                Name = parking.Name,
+                Address = parking.Address,
+                Description = parking.Description,
+                IsActive = parking.IsActive
+            };
+
+            return Ok(result);
         }
 
-        // Créer un nouveau parking
-        [HttpPost]
-        [Authorize(Roles = "Admin")]  // Seul l'Admin peut créer un parking
-        public async Task<ActionResult<Parking>> CreateParking([FromBody] Parking parking)
+        [HttpGet("search-by-address")]
+        [Authorize(Roles = "Admin,Manager,Driver")]
+        public async Task<ActionResult<IEnumerable<ParkingDto>>> SearchParkingsByAddress([FromQuery] string address)
         {
+            if (string.IsNullOrWhiteSpace(address))
+                return BadRequest(new { message = "Address is required" });
+
+            var search = address.ToLower();
+
+            var parkings = await _context.Parkings
+                .Where(p => p.Address.ToLower().Contains(search))
+                .Select(p => new ParkingDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Address = p.Address,
+                    Description = p.Description,
+                    IsActive = p.IsActive
+                })
+                .ToListAsync();
+
+            return Ok(parkings);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ParkingDto>> CreateParking([FromBody] ParkingDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var parking = new Parking
+            {
+                Name = dto.Name,
+                Address = dto.Address,
+                Description = dto.Description,
+                IsActive = dto.IsActive
+            };
+
             _context.Parkings.Add(parking);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetParking), new { id = parking.Id }, parking);
+            var result = new ParkingDto
+            {
+                Id = parking.Id,
+                Name = parking.Name,
+                Address = parking.Address,
+                Description = parking.Description,
+                IsActive = parking.IsActive
+            };
+
+            return CreatedAtAction(nameof(GetParking), new { id = parking.Id }, result);
         }
 
-        // Mettre à jour un parking existant
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]  // Seul l'Admin peut mettre à jour un parking
-        public async Task<IActionResult> UpdateParking(int id, [FromBody] Parking updatedParking)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateParking(int id, [FromBody] ParkingDto dto)
         {
-            var existingParking = await _context.Parkings.FindAsync(id);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (existingParking == null)
+            var parking = await _context.Parkings.FindAsync(id);
+
+            if (parking == null)
                 return NotFound(new { message = "Parking not found" });
 
-            existingParking.Name = updatedParking.Name;
-            existingParking.Address = updatedParking.Address;
-            existingParking.Description = updatedParking.Description;
+            parking.Name = dto.Name;
+            parking.Address = dto.Address;
+            parking.Description = dto.Description;
+            parking.IsActive = dto.IsActive;
 
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Parking updated successfully" });
         }
 
-        // Supprimer un parking
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]  // Seul l'Admin peut supprimer un parking
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteParking(int id)
         {
             var parking = await _context.Parkings
@@ -95,12 +153,10 @@ namespace SmartParking.Controllers
             return Ok(new { message = "Parking deleted successfully" });
         }
 
-        // Méthode pour activer ou désactiver un parking
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin")]  // Seul l'Admin peut changer le statut
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> SetParkingStatus(int id, [FromQuery] string status)
         {
-            // Vérification du statut
             if (status != "active" && status != "inactive")
                 return BadRequest(new { message = "Invalid status. Use 'active' or 'inactive'." });
 
@@ -109,8 +165,7 @@ namespace SmartParking.Controllers
             if (parking == null)
                 return NotFound(new { message = "Parking not found" });
 
-            // Mettre à jour le statut du parking
-            parking.IsActive = (status == "active");
+            parking.IsActive = status == "active";
             await _context.SaveChangesAsync();
 
             return Ok(new { message = $"Parking status set to {status}" });

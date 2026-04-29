@@ -14,14 +14,23 @@ namespace SmartParking.Models
         public DbSet<Zone> Zones { get; set; }
         public DbSet<Spot> Spots { get; set; }
 
+        // Sprint 3
+        public DbSet<Reservation> Reservations { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // ✅ Conversion enum Role -> string
+            // Role enum -> string
             modelBuilder.Entity<User>()
                 .Property(u => u.Role)
                 .HasConversion<string>();
+
+            // ReservationStatus enum -> string ✅
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.Status)
+                .HasConversion<string>()
+                .HasMaxLength(20);
 
             modelBuilder.Entity<Zone>()
                 .HasOne(z => z.Parking)

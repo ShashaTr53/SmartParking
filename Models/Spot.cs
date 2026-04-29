@@ -19,5 +19,7 @@ namespace SmartParking.Models
 
         [Required]
         public SpotStatus Status { get; set; } = SpotStatus.Free;
+
+        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
     }
 }

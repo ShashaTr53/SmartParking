@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartParking.Models;
+using SmartParking.Models.DTOs;
 
 namespace SmartParking.Controllers
 {
@@ -21,12 +22,37 @@ namespace SmartParking.Controllers
         public async Task<ActionResult> GetZones()
         {
             var zones = await _context.Zones
+                .Include(z => z.Parking)
                 .Select(z => new
                 {
                     z.Id,
                     z.Name,
                     z.ParkingId,
-                    ParkingName = z.Parking.Name
+                    ParkingName = z.Parking != null ? z.Parking.Name : ""
+                })
+                .ToListAsync();
+
+            return Ok(zones);
+        }
+
+        // GET: api/Zones/parking/{parkingId}
+        [HttpGet("parking/{parkingId}")]
+        [Authorize(Roles = "Admin,Manager,Driver")]
+        public async Task<ActionResult> GetZonesByParkingId(int parkingId)
+        {
+            var parkingExists = await _context.Parkings
+                .AnyAsync(p => p.Id == parkingId);
+
+            if (!parkingExists)
+                return NotFound(new { message = "Parking not found" });
+
+            var zones = await _context.Zones
+                .Where(z => z.ParkingId == parkingId)
+                .Select(z => new
+                {
+                    z.Id,
+                    z.Name,
+                    z.ParkingId
                 })
                 .ToListAsync();
 
@@ -62,13 +88,14 @@ namespace SmartParking.Controllers
         public async Task<ActionResult> GetZoneById(int id)
         {
             var zone = await _context.Zones
+                .Include(z => z.Parking)
                 .Where(z => z.Id == id)
                 .Select(z => new
                 {
                     z.Id,
                     z.Name,
                     z.ParkingId,
-                    ParkingName = z.Parking.Name
+                    ParkingName = z.Parking != null ? z.Parking.Name : ""
                 })
                 .FirstOrDefaultAsync();
 
@@ -80,13 +107,22 @@ namespace SmartParking.Controllers
 
         // POST: api/zones
         [HttpPost]
-        public async Task<ActionResult> CreateZone(Zone zone)
+        public async Task<ActionResult> CreateZone([FromBody] ZoneDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var parkingExists = await _context.Parkings
-                .AnyAsync(p => p.Id == zone.ParkingId);
+                .AnyAsync(p => p.Id == dto.ParkingId);
 
             if (!parkingExists)
                 return BadRequest(new { message = "Parking does not exist" });
+
+            var zone = new Zone
+            {
+                Name = dto.Name,
+                ParkingId = dto.ParkingId
+            };
 
             _context.Zones.Add(zone);
             await _context.SaveChangesAsync();
@@ -101,24 +137,21 @@ namespace SmartParking.Controllers
 
         // PUT: api/zones/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateZone(int id, Zone updatedZone)
+        public async Task<IActionResult> UpdateZone(int id, [FromBody] ZoneDto dto)
         {
-            if (id != updatedZone.Id)
-                return BadRequest(new { message = "Zone ID mismatch" });
-
             var zone = await _context.Zones.FindAsync(id);
 
             if (zone == null)
                 return NotFound(new { message = "Zone not found" });
 
             var parkingExists = await _context.Parkings
-                .AnyAsync(p => p.Id == updatedZone.ParkingId);
+                .AnyAsync(p => p.Id == dto.ParkingId);
 
             if (!parkingExists)
                 return BadRequest(new { message = "Parking does not exist" });
 
-            zone.Name = updatedZone.Name;
-            zone.ParkingId = updatedZone.ParkingId;
+            zone.Name = dto.Name;
+            zone.ParkingId = dto.ParkingId;
 
             await _context.SaveChangesAsync();
 
