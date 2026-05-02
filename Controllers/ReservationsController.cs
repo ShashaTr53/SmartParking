@@ -19,6 +19,7 @@ namespace SmartParking.Controllers
             _context = context;
         }
 
+        // ✅ STEP 1: Start Reservation (PaymentSession فقط)
         [HttpPost]
         [Authorize(Roles = "Driver")]
         public async Task<IActionResult> CreateReservation([FromBody] CreateReservationDto dto)
@@ -34,26 +35,34 @@ namespace SmartParking.Controllers
             if (spot.Status != SpotStatus.Free)
                 return BadRequest("Spot is not available");
 
-            var reservation = new Reservation
+            var session = new PaymentSession
             {
                 UserId = userId,
                 SpotId = spot.Id,
                 StartTime = dto.StartTime,
-                PlannedEndTime = dto.StartTime.AddHours(2),
-                InitialAmount = 3,
-                ExtraAmount = 0,
-                TotalAmount = 3,
-                Status = ReservationStatus.Created
+                Amount = 3,
+                Status = PaymentStatus.Pending,
+                CreatedAt = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddMinutes(15)
             };
 
-            spot.Status = SpotStatus.Reserved;
-
-            _context.Reservations.Add(reservation);
+            _context.PaymentSessions.Add(session);
             await _context.SaveChangesAsync();
 
-            return Ok("Reservation created successfully");
+            var paymentUrl = $"http://fake-flouci.com/pay/{session.Id}";
+
+            return Ok(new
+            {
+                message = "Proceed to payment",
+                paymentSessionId = session.Id,
+                paymentUrl = paymentUrl,
+                amount = session.Amount,
+                startTime = session.StartTime,
+                expiresAt = session.ExpiresAt
+            });
         }
 
+        // ✅ Driver Reservations
         [HttpGet("my")]
         [Authorize(Roles = "Driver")]
         public async Task<ActionResult<List<ReservationDto>>> GetMyReservations()
@@ -84,6 +93,7 @@ namespace SmartParking.Controllers
             return Ok(reservations);
         }
 
+        // ✅ Admin / Manager
         [HttpGet]
         [Authorize(Roles = "Admin,Manager")]
         public async Task<ActionResult<List<ReservationDto>>> GetAllReservations()
@@ -111,6 +121,7 @@ namespace SmartParking.Controllers
             return Ok(reservations);
         }
 
+        // ✅ Reservations by Parking
         [HttpGet("parking/{parkingId}")]
         [Authorize(Roles = "Admin,Manager")]
         public async Task<ActionResult<List<ReservationDto>>> GetReservationsByParking(int parkingId)
@@ -134,13 +145,14 @@ namespace SmartParking.Controllers
                 TotalAmount = r.TotalAmount,
                 Status = r.Status.ToString(),
                 ParkingName = r.Spot?.Zone?.Parking?.Name ?? "",
-                ZoneName = r.Spot?.Zone?.Name ?? "",
-                SpotCode = r.Spot?.Code ?? ""
+                ZoneName = r.Spot?.Zone?.Name ?? "",  // ✅ FIX
+                SpotCode = r.Spot?.Code ?? ""         // ✅ FIX
             }).ToList();
 
             return Ok(reservations);
         }
 
+        // ✅ Cancel Reservation
         [HttpPut("cancel/{id}")]
         [Authorize(Roles = "Driver,Admin")]
         public async Task<IActionResult> CancelReservation(int id)
