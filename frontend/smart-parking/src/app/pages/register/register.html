@@ -1,0 +1,65 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-logo">SmartParking</div>
+    <div class="auth-subtitle">Create your account</div>
+    <h1 class="auth-title">Register</h1>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
+      <!-- EMAIL -->
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="you@example.com"
+          class="form-input"
+          [class.invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+        />
+        <span
+          class="field-error"
+          *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+        >Valid email is required</span>
+      </div>
+
+      <!-- PASSWORD -->
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input
+          type="password"
+          formControlName="password"
+          placeholder="Min. 6 characters"
+          class="form-input"
+          [class.invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+        />
+        <span
+          class="field-error"
+          *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+        >Password must be at least 6 characters</span>
+      </div>
+
+      <!-- ROLE -->
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select formControlName="role" class="form-select">
+          <option value="Driver">Driver</option>
+          <option value="Manager">Manager</option>
+          <option value="Admin">Admin</option>
+        </select>
+      </div>
+
+      <!-- MESSAGES -->
+      <div class="msg-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+      <div class="msg-success" *ngIf="successMessage">{{ successMessage }}</div>
+
+      <button type="submit" class="btn-submit" [disabled]="registerForm.invalid">
+        Register
+      </button>
+
+    </form>
+
+    <p class="auth-footer">
+      Already have an account? <a routerLink="/login">Login</a>
+    </p>
+  </div>
+</div>

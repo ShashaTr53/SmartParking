@@ -1,0 +1,38 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-logo">SmartParking</div>
+    <div class="auth-subtitle">Welcome back</div>
+    <h1 class="auth-title">Login</h1>
+
+    <!-- ERROR -->
+    <div class="msg-error" *ngIf="error">{{ error }}</div>
+
+    <!-- EMAIL -->
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input
+        type="email"
+        [(ngModel)]="email"
+        placeholder="you@example.com"
+        class="form-input"
+      />
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input
+        type="password"
+        [(ngModel)]="password"
+        placeholder="Your password"
+        class="form-input"
+      />
+    </div>
+
+    <button class="btn-submit" (click)="onSubmit()">Login</button>
+
+    <p class="auth-footer">
+      Don't have an account? <a routerLink="/register">Register</a>
+    </p>
+  </div>
+</div>

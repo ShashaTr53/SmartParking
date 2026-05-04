@@ -1,0 +1,280 @@
+<div class="shell">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-title">SmartParking</span>
+      <small class="logo-sub">Admin panel</small>
+    </div>
+    <div class="nav-item active" (click)="show('overview')">▦ Overview</div>
+    <div class="nav-item" (click)="show('parkings')">P Parkings</div>
+    <div class="nav-item" (click)="show('zones')">◈ Zones</div>
+    <div class="nav-item" (click)="show('spots')">◻ Spots</div>
+    <div class="nav-item" (click)="show('users')">⊙ Users</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h2>{{ pageTitle }}</h2>
+      <div class="topbar-right">
+        <span class="badge">Admin</span>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <div *ngIf="section==='overview'">
+        <div class="stats-row">
+          <div class="stat"><div class="stat-label">Parkings</div><div class="stat-val">{{counts.p}}</div></div>
+          <div class="stat"><div class="stat-label">Zones</div><div class="stat-val">{{counts.z}}</div></div>
+          <div class="stat"><div class="stat-label">Spots</div><div class="stat-val">{{counts.s}}</div></div>
+          <div class="stat"><div class="stat-label">Users</div><div class="stat-val">{{counts.u}}</div></div>
+        </div>
+      </div>
+
+      <!-- PARKINGS -->
+      <!-- PARKINGS SECTION -->
+        <div *ngIf="section==='parkings'">
+          <button class="btn-add" (click)="openModal('parking')">+ Add parking</button>
+
+          <table *ngIf="parkings.length > 0; else noParkings">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Zones</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of parkings">
+                <td>{{p.name}}</td>
+                <td>{{p.address}}</td>
+                <td>{{p.isActive ? 'Active' : 'Inactive'}}</td>
+                <td>{{p.zones?.length ?? 0}}</td>
+                <td>
+                  <button (click)="editParking(p)">Edit</button>
+                  <button class="btn-danger" (click)="deleteParking(p.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <ng-template #noParkings>
+            <div class="empty-state">No parkings found or backend offline.</div>
+          </ng-template>
+        </div>
+
+      <!-- PARKING MODAL — keep this separate, outside the section div -->
+      <div *ngIf="showModal && modalType==='parking'" class="modal-overlay" (click)="closeModal()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+          <h3>{{ isEditing ? 'Edit Parking' : 'Add Parking' }}</h3>
+
+          <input [(ngModel)]="newParking.name" placeholder="Name" />
+          <input [(ngModel)]="newParking.location" placeholder="Location" />
+
+          <div class="modal-actions">
+            <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+            <button class="btn-save" (click)="saveParking()">Save</button>
+          </div>
+        </div>
+      </div>
+      
+
+      <!-- ZONES SECTION -->
+<div *ngIf="section==='zones'">
+  <button class="btn-add" (click)="openModal('zone')">+ Add zone</button>
+
+  <table *ngIf="zones.length > 0; else noZones">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Parking</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let z of zones">
+        <td>{{z.name}}</td>
+        <td>{{z.parkingName}}</td>
+        <td>
+          <button (click)="editZone(z)">Edit</button>
+          <button class="btn-danger" (click)="deleteZone(z.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ng-template #noZones>
+    <div class="empty-state">No zones found.</div>
+  </ng-template>
+</div>
+
+    <!-- SPOTS SECTION -->
+    <div *ngIf="section==='spots'">
+      <button class="btn-add" (click)="openModal('spot')">+ Add spot</button>
+
+      <table *ngIf="spots.length > 0; else noSpots">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Zone</th>
+            <th>Parking</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of spots">
+            <td>{{s.code}}</td>
+            <td>{{s.zoneName}}</td>
+            <td>{{s.parkingName}}</td>
+            <td>
+              <span class="badge-role"
+                [ngClass]="{
+                  'role-admin': s.status === 0,
+                  'role-manager': s.status === 2,
+                  'role-driver': s.status === 1
+                }">
+                {{ s.status === 0 ? 'Free' : s.status === 1 ? 'Occupied' : 'Reserved' }}
+              </span>
+            </td>
+            <td>
+              <button (click)="editSpot(s)">Edit</button>
+              <button class="btn-danger" (click)="deleteSpot(s.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #noSpots>
+        <div class="empty-state">No spots found.</div>
+      </ng-template>
+    </div>
+
+     <!-- ZONE MODAL -->
+    <div *ngIf="showModal && modalType==='zone'" class="modal-overlay" (click)="closeModal()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <h3>{{ isEditing ? 'Edit Zone' : 'Add Zone' }}</h3>
+
+        <input [(ngModel)]="newZone.name" placeholder="Zone name" />
+
+        <select [(ngModel)]="newZone.parkingId">
+          <option [ngValue]="0" disabled>Select parking</option>
+          <option *ngFor="let p of parkings" [ngValue]="p.id">{{p.name}}</option>
+        </select>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+          <button class="btn-save" (click)="saveZone()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPOT MODAL -->
+    <div *ngIf="showModal && modalType==='spot'" class="modal-overlay" (click)="closeModal()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <h3>{{ isEditing ? 'Edit Spot' : 'Add Spot' }}</h3>
+
+        <input name="spotCode" [(ngModel)]="newSpot.code" placeholder="Spot code (e.g. A1)" />
+
+        <select name="spotZone" [(ngModel)]="newSpot.zoneId">
+          <option [ngValue]="0" disabled>Select zone</option>
+          <option *ngFor="let z of zones" [ngValue]="z.id">{{z.name}} — {{z.parkingName}}</option>
+        </select>
+
+        <select name="spotStatus" [(ngModel)]="newSpot.status">
+          <option [ngValue]="0">Free</option>
+          <option [ngValue]="1">Occupied</option>
+          <option [ngValue]="2">Reserved</option>
+        </select>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+          <button class="btn-save" (click)="saveSpot()">Save</button>
+        </div>
+      </div>
+</div>
+      
+      <!-- USERS -->
+    <div *ngIf="section==='users'">
+  <button class="btn-add" (click)="openModal('user')">+ Add user</button>
+
+    <table *ngIf="users.length > 0; else noUsers">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of users">
+          <td>{{u.email}}</td>
+          <td>
+            <span class="badge-role"
+                [ngClass]="{
+                  'role-admin':   isAdmin(u.role),
+                  'role-manager': isManager(u.role),
+                  'role-driver':  isDriver(u.role)
+                }">
+                {{ getRoleLabel(u.role) }}
+              </span>
+          </td>
+          <td>
+            <span class="status-dot" [ngClass]="u.isActive ? 'dot-active' : 'dot-inactive'"></span>
+            {{u.isActive ? 'Active' : 'Inactive'}}
+          </td>
+          <td>{{u.createdAt | date:'MMM yyyy'}}</td>
+          <td>
+            <button (click)="editUser(u)">Edit</button>
+            <button class="btn-danger" (click)="deleteUser(u.id)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #noUsers>
+      <div class="empty-state">No users found or backend offline.</div>
+    </ng-template>
+  </div>
+
+    </div>
+  </div>
+</div>
+
+  <div *ngIf="section === 'users'">
+    <table>
+      <tr *ngFor="let u of users">
+        <td>{{ u.email }}</td>
+        <td>{{ u.role }}</td>
+      </tr>
+    </table>
+    <p *ngIf="users.length === 0">No users found or unauthorized.</p>
+  </div>
+
+<!-- MODAL — outside main content, at root level --> <!-- ✅ moved here -->
+<!-- USER MODAL -->
+<div *ngIf="showModal && modalType==='user'" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <h3>{{ isEditing ? 'Edit User' : 'Add User' }}</h3>
+
+    
+    <input id="email" aria-label="Email" type="email" />
+    <input id="password" aria-label="Password" type="password"/>
+
+    <select [(ngModel)]="newUser.role">
+      <option value="Admin">Admin</option>
+      <option value="Manager">Manager</option>
+      <option value="Driver">Driver</option>
+    </select>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+      <button class="btn-save" (click)="saveUser()">Save</button>
+    </div>
+  </div>
+</div>

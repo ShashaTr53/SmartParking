@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SmartParking</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+  <app-root></app-root>
+
+  <!-- index.html -->
+<div id="chat"></div>
+<input id="msg" type="text" placeholder="Type a message...">
+<button onclick="sendMessage()">Send</button>
+
+<script>
+  const history = [];
+
+  async function sendMessage() {
+    const userText = document.getElementById('msg').value;
+    history.push({ role: "user", content: userText });
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: history
+      })
+    });
+
+    const data = await res.json();
+    const reply = data.content[0].text;
+    history.push({ role: "assistant", content: reply });
+
+    
+  }
+</script>
+</body>
+</html>
