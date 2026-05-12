@@ -21,6 +21,9 @@ namespace SmartParking.Models
         public DbSet<PaymentSession> PaymentSessions { get; set; }
         public DbSet<QrTicket> QrTickets { get; set; }
 
+        // Sprint 5
+        public DbSet<Notification> Notifications { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -62,6 +65,31 @@ namespace SmartParking.Models
                 .WithOne()
                 .HasForeignKey<QrTicket>(q => q.ReservationId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Sprint 5 - Notification
+            modelBuilder.Entity<Notification>()
+                .Property(n => n.Title)
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<Notification>()
+                .Property(n => n.Message)
+                .HasMaxLength(500);
+
+            modelBuilder.Entity<Notification>()
+                .Property(n => n.Type)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.Reservation)
+                .WithMany()
+                .HasForeignKey(n => n.ReservationId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

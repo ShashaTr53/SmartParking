@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SmartParking.Models;
 using SmartParking.Filters;
+using SmartParking.Services;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -69,6 +70,9 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+
+// Sprint 5 - Notification automatique
+builder.Services.AddHostedService<ReservationNotificationService>();
 
 // Swagger
 builder.Services.AddSwaggerGen(options =>
